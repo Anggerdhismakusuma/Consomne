@@ -24,3 +24,21 @@ The model was trained on professional sleep health data, undergoing rigorous hyp
    ```bash
    git clone [https://github.com/yourusername/consomme-ai.git](https://github.com/yourusername/consomme-ai.git)
    cd consomme-ai
+
+2. **Setup Virtual Enivronment**
+   ```bash
+   python -m venv venv
+#  Activate on Windows:
+   venv\Scripts\activate
+#  Activate on Mac/Linux:
+   source venv/bin/activate
+
+3. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+
+4. **Run Appliccation**
+   ```bash
+   python app.py
+
+### Visit (http://127.0.0.1:5000) in your browser
