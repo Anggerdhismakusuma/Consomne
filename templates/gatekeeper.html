@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Consommé AI | Professional Access</title>
+    <title>Consommé AI | Access Control</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
         .gatekeeper-card {
             text-align: center;
-            max-width: 400px;
+            max-width: 450px;
             margin: 100px auto;
             padding: 40px;
             background: rgba(255, 255, 255, 0.1);
@@ -17,45 +17,59 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             box-shadow: 0 15px 35px rgba(0,0,0,0.5);
         }
-        .icon-lock {
-            font-size: 50px;
-            margin-bottom: 20px;
+        .btn-container {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
         }
-        h2 { margin-bottom: 10px; color: #fff; }
-        p { color: #ccc; margin-bottom: 30px; font-size: 0.9em; }
-        .btn-verify {
-            background: #e94560;
-            color: white;
-            border: none;
-            padding: 12px 30px;
+        .btn {
+            padding: 12px 20px;
             border-radius: 25px;
             cursor: pointer;
             font-weight: bold;
             transition: 0.3s;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            border: none;
+            flex: 1;
         }
-        .btn-verify:hover {
-            background: #ff5e78;
-            transform: translateY(-3px);
-            box-shadow: 0 5px 15px rgba(233, 69, 96, 0.4);
+        .btn-yes { background: #e94560; color: white; }
+        .btn-no { background: #4e4e4e; color: white; }
+        .btn:hover { opacity: 0.8; transform: translateY(-2px); }
+        #access-denied {
+            color: #ff4d4d;
+            margin-top: 20px;
+            display: none; /* Sembunyi dulu */
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
     <div class="gatekeeper-card">
-        <div class="icon-lock">🔒</div>
-        <h2>Consommé AI</h2>
-        <p>Aplikasi ini dirancang khusus untuk menganalisis kualitas tidur para pekerja profesional.</p>
+        <div class="icon-lock" style="font-size: 50px;">🔒</div>
+        <h2>Welcome to Consommé AI</h2>
+        <p>Aplikasi ini khusus untuk analisis kualitas tidur pekerja profesional.</p>
+        <hr style="border: 0.5px solid rgba(255,255,255,0.1); margin: 20px 0;">
+        <p><strong>Apakah Anda seorang pekerja?</strong></p>
         
-        <form id="verifyForm">
-            <p>Apakah Anda seorang pekerja profesional?</p>
-            <button type="button" class="btn-verify" onclick="verifyAccess()">Ya, Saya Pekerja</button>
-        </form>
+        <div class="btn-container">
+            <button class="btn btn-yes" onclick="verifyAccess(true)">Ya, Saya Pekerja</button>
+            <button class="btn btn-no" onclick="verifyAccess(false)">Bukan Pekerja</button>
+        </div>
+
+        <div id="access-denied">
+            ❌ Akses Ditolak. Aplikasi ini hanya untuk kalangan profesional.
+        </div>
     </div>
 
     <script>
-        function verifyAccess() {
+        function verifyAccess(isWorker) {
+            const errorMsg = document.getElementById('access-denied');
+            
+            if (!isWorker) {
+                errorMsg.style.display = 'block';
+                return;
+            }
+
             fetch('/verify', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -64,10 +78,7 @@
             .then(response => response.json())
             .then(data => {
                 if (data.status === 'success') {
-                    // Redirect ke halaman utama aplikasi
                     window.location.href = '/app';
-                } else {
-                    alert('Maaf, akses ditolak.');
                 }
             })
             .catch(error => console.error('Error:', error));

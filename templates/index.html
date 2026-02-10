@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consomne | AI Sleep Advisor</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        /* Tambahan CSS inline untuk memastikan UI tetap rapi jika style.css belum load sempurna */
+        #result-section {
+            transition: all 0.5s ease;
+            margin-top: 30px;
+        }
+        .result-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 25px;
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        #btn-predict:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌙 Consomne</h1>
+        <p class="subtitle">Personalized AI Sleep Quality Predictor</p>
+        
+        <div id="input-form">
+            <div class="form-grid">
+                <div class="input-group">
+                    <label>Gender</label>
+                    <select id="Gender">
+                        <option value="1">Male</option>
+                        <option value="0">Female</option>
+                    </select>
+                </div>
+                
+                <div class="input-group">
+                    <label>Age</label>
+                    <input type="number" id="Age" placeholder="e.g. 25" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Occupation</label>
+                    <select id="Occupation">
+                        <option value="0">Professional Services (Accountant, etc.)</option>
+                        <option value="1">Healthcare (Doctor, Nurse)</option>
+                        <option value="2">Tech and Engineering</option>
+                        <option value="6">Sales and Business</option>
+                        <option value="9">Education (Teacher)</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Sleep Duration (Hours)</label>
+                    <input type="number" id="Sleep Duration" step="0.1" placeholder="e.g. 7.5" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Physical Activity (0-100)</label>
+                    <input type="number" id="Physical Activity Level" placeholder="e.g. 60" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Stress Level (1-10)</label>
+                    <input type="number" id="Stress Level" placeholder="e.g. 4" required>
+                </div>
+
+                <div class="input-group">
+                    <label>BMI Category</label>
+                    <select id="BMI Category">
+                        <option value="0">Normal</option>
+                        <option value="1">Overweight</option>
+                        <option value="2">Obese</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Heart Rate (BPM)</label>
+                    <input type="number" id="Heart Rate" placeholder="e.g. 72" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Daily Steps</label>
+                    <input type="number" id="Daily Steps" placeholder="e.g. 8000" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Sleep Disorder</label>
+                    <select id="Sleep Disorder">
+                        <option value="0">None</option>
+                        <option value="1">Insomnia</option>
+                        <option value="2">Sleep Apnea</option>
+                    </select>
+                </div>
+
+                <div class="input-group">
+                    <label>Systolic BP (Top)</label>
+                    <input type="number" id="Systolic" placeholder="e.g. 120" required>
+                </div>
+
+                <div class="input-group">
+                    <label>Diastolic BP (Bottom)</label>
+                    <input type="number" id="Diastolic" placeholder="e.g. 80" required>
+                </div>
+            </div>
+
+            <button onclick="getPrediction()" id="btn-predict">Analyze My Sleep</button>
+        </div>
+
+        <div class="user-guide">
+            <h3>📝 Quick Tips</h3>
+            <div class="guide-grid">
+                <div class="guide-item">
+                    <strong>Physical Activity:</strong> 
+                    <span>Estimate your daily energy expenditure from 0 to 100.</span>
+                </div>
+                <div class="guide-item">
+                    <strong>Blood Pressure:</strong> 
+                    <span>Input separate values for Systolic (high) and Diastolic (low).</span>
+                </div>
+            </div>
+        </div>
+
+        <div id="result-section" style="display:none;">
+            <div class="result-card">
+                <h2>Your Sleep Quality Score: <span id="score-val">0</span> / 10</h2>
+                <div id="advice-list" style="margin-top: 15px; line-height: 1.6;"></div>
+            </div>
+
+            <div class="rating-box" style="margin-top: 20px;">
+                <h3>Rate our Accuracy</h3>
+                <select id="user-rating">
+                    <option value="5">⭐⭐⭐⭐⭐ Very Accurate</option>
+                    <option value="4">⭐⭐⭐⭐ Accurate</option>
+                    <option value="3">⭐⭐⭐ Neutral</option>
+                    <option value="1">⭐ Inaccurate</option>
+                </select>
+                <textarea id="user-comment" placeholder="Any suggestions to improve our AI?" style="width: 100%; margin: 10px 0; padding: 10px; border-radius: 10px;"></textarea>
+                <button onclick="sendFeedback()" class="btn-secondary">Submit Feedback</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function getPrediction() {
+            const fields = [
+                'Gender', 'Age', 'Occupation', 'Sleep Duration', 
+                'Physical Activity Level', 'Stress Level', 'BMI Category', 
+                'Heart Rate', 'Daily Steps', 'Sleep Disorder', 
+                'Systolic', 'Diastolic'
+            ];
+            
+            const data = {};
+            
+            // Ambil data dan validasi
+            for (let f of fields) {
+                const element = document.getElementById(f);
+                if (element) {
+                    const val = element.value;
+                    if (val === "") {
+                        alert("Please fill in " + f + "!");
+                        return;
+                    }
+                    data[f] = parseFloat(val);
+                }
+            }
+
+            const btn = document.getElementById('btn-predict');
+            btn.innerText = "Analyzing...";
+            btn.disabled = true;
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(data)
+                });
+                
+                const result = await response.json();
+                
+                if(result.status === 'success') {
+                    document.getElementById('result-section').style.display = 'block';
+                    document.getElementById('score-val').innerText = result.prediction;
+                    
+                    // Render rekomendasi
+                    const adviceList = document.getElementById('advice-list');
+                    adviceList.innerHTML = result.recommendations.map(t => `<p style="margin-bottom: 8px;">✨ ${t}</p>`).join('');
+                    
+                    // Animasi scroll halus ke hasil
+                    document.getElementById('result-section').scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    alert("Error: " + result.message);
+                }
+            } catch (error) {
+                console.error("Fetch Error:", error);
+                alert("Could not connect to the AI server. Check your Terminal.");
+            } finally {
+                btn.innerText = "Analyze My Sleep";
+                btn.disabled = false;
+            }
+        }
+
+        async function sendFeedback() {
+            const fb = {
+                rating: document.getElementById('user-rating').value,
+                comment: document.getElementById('user-comment').value
+            };
+            try {
+                await fetch('/feedback', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(fb)
+                });
+                alert("Thank you! Your feedback has been recorded.");
+            } catch (e) {
+                alert("Feedback failed to send.");
+            }
+        }
+    </script>
+</body>
+</html>
