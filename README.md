@@ -28,9 +28,11 @@ The model was trained on professional sleep health data, undergoing rigorous hyp
 2. **Setup Virtual Enivronment**
    ```bash
    python -m venv venv
-#  Activate on Windows:
+
+   # Activate on Windows:
    venv\Scripts\activate
-#  Activate on Mac/Linux:
+   
+   # Activate on Mac/Linux:
    source venv/bin/activate
 
 3. **Install Dependencies**
