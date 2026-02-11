@@ -6,9 +6,8 @@ import csv
 from datetime import datetime
 
 app = Flask(__name__)
-app.secret_key = 'consomne_secret_key' # Bebas ganti apa saja
+app.secret_key = 'consomne_secret_key'
 
-# 1. LOAD MODEL (Tanpa Scaler)
 model = joblib.load('model_consomne.pkl')
 
 @app.route('/')
@@ -19,13 +18,12 @@ def gatekeeper():
 def verify():
     data = request.json
     if data.get('is_employed') == 'yes':
-        session['is_allowed'] = True  # Memberikan izin akses
+        session['is_allowed'] = True
         return jsonify({'status': 'success'})
     return jsonify({'status': 'error'})
 
 @app.route('/app')
 def main_app():
-    # Proteksi: Jika belum verifikasi di gatekeeper, tendang balik ke awal
     if not session.get('is_allowed'):
         return redirect(url_for('gatekeeper'))
     return render_template('index.html')
@@ -38,7 +36,6 @@ def predict():
     try:
         data = request.json
         
-        # 1. URUTAN KOLOM HARUS PERSIS SEPERTI X_TRAIN KAMU
         columns_order = [
             'Age', 'Sleep Duration', 'Physical Activity Level', 'Stress Level', 
             'BMI Category', 'Heart Rate', 'Daily Steps', 'Sleep Disorder', 
@@ -47,10 +44,8 @@ def predict():
             'Occupation_Tech & Engineering'
         ]
         
-        # 2. Inisialisasi baris baru dengan nilai default (False untuk boolean, 0 untuk angka)
         input_row = {col: 0 for col in columns_order}
 
-        # 3. Isi fitur numerik dasar
         input_row['Age'] = float(data.get('Age', 0))
         input_row['Sleep Duration'] = float(data.get('Sleep Duration', 0))
         input_row['Physical Activity Level'] = float(data.get('Physical Activity Level', 0))
@@ -61,15 +56,9 @@ def predict():
         input_row['Sleep Disorder'] = float(data.get('Sleep Disorder', 0))
         input_row['Systolic'] = float(data.get('Systolic', 0))
         input_row['Diastolic'] = float(data.get('Diastolic', 0))
-
-        # 4. LOGIKA ONE-HOT (Mapping dari Dropdown HTML ke Kolom Boolean)
-        
-        # Gender: Di HTML Male=1, Female=0. Model butuh Gender_Male (True/False)
         input_row['Gender_Male'] = True if int(data.get('Gender')) == 1 else False
 
-        # Occupation Mapping (Berdasarkan value di index.html kamu)
         occ_val = int(data.get('Occupation'))
-        # Reset semua occupation ke False dulu
         input_row['Occupation_Healthcare'] = False
         input_row['Occupation_Professional Services'] = False
         input_row['Occupation_Sales & Business'] = False
@@ -84,14 +73,11 @@ def predict():
         elif occ_val in [2, 7, 8]: # Engineer, Scientist, Software Engineer
             input_row['Occupation_Tech & Engineering'] = True
 
-        # 5. Konversi ke DataFrame
         input_df = pd.DataFrame([input_row], columns=columns_order)
         
-        # 6. Jalankan Prediksi
         prediction = model.predict(input_df)[0]
         score = round(float(prediction), 1)
         
-        # Logika rekomendasi (sama seperti sebelumnya)
         recommendations = []
         if data['Stress Level'] > 6:
             recommendations.append("Your stress levels are high. Consider 10 minutes of meditation before bed.")
@@ -113,7 +99,6 @@ def predict():
         print(f"Error detail: {e}")
         return jsonify({'status': 'error', 'message': str(e)})
 
-# Tambahkan route feedback agar tombol feedback di HTML kamu tidak error
 @app.route('/feedback', methods=['POST'])
 def feedback():
     if not session.get('is_allowed'):
@@ -125,19 +110,15 @@ def feedback():
         comment = data.get('comment')
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        # Tentukan nama file CSV
         file_path = 'user_feedback.csv'
         file_exists = os.path.isfile(file_path)
 
-        # Simpan ke CSV
         with open(file_path, mode='a', newline='', encoding='utf-8') as file:
             writer = csv.writer(file)
             
-            # Jika file baru, buat header-nya dulu
             if not file_exists:
                 writer.writerow(['Timestamp', 'Rating', 'Comment'])
             
-            # Tulis data feedback
             writer.writerow([timestamp, rating, comment])
 
         print(f"Feedback saved to CSV: {rating} stars")

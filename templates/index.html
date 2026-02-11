@@ -158,7 +158,6 @@
             
             const data = {};
             
-            // Ambil data dan validasi
             for (let f of fields) {
                 const element = document.getElementById(f);
                 if (element) {
@@ -188,11 +187,9 @@
                     document.getElementById('result-section').style.display = 'block';
                     document.getElementById('score-val').innerText = result.prediction;
                     
-                    // Render rekomendasi
                     const adviceList = document.getElementById('advice-list');
                     adviceList.innerHTML = result.recommendations.map(t => `<p style="margin-bottom: 8px;">✨ ${t}</p>`).join('');
                     
-                    // Animasi scroll halus ke hasil
                     document.getElementById('result-section').scrollIntoView({ behavior: 'smooth' });
                 } else {
                     alert("Error: " + result.message);
