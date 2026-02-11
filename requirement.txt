@@ -3,3 +3,5 @@ pandas
 joblib
 scikit-learn
 gunicorn
+flask-sqlalchemy
+psycopg2-binary

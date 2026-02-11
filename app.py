@@ -4,11 +4,26 @@ import pandas as pd
 import os
 import csv
 from datetime import datetime
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.sql import func
 
 app = Flask(__name__)
 app.secret_key = 'consomne_secret_key'
 
+app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
 model = joblib.load('model_consomne.pkl')
+
+class Feedback(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    rating = db.Column(db.Integer)
+    comment = db.Column(db.Text)
+    timestamp = db.Column(db.DateTime(timezone=True), server_default=func.now())
+    
+with app.app_context():
+    db.create_all()
 
 @app.route('/')
 def gatekeeper():
@@ -108,23 +123,20 @@ def feedback():
         data = request.json
         rating = data.get('rating')
         comment = data.get('comment')
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        # timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-        file_path = 'user_feedback.csv'
-        file_exists = os.path.isfile(file_path)
+        new_feedback = Feedback(
+            rating=rating,
+            comment=comment,
+        )
+        db.session.add(new_feedback)
+        db.session.commit()
 
-        with open(file_path, mode='a', newline='', encoding='utf-8') as file:
-            writer = csv.writer(file)
-            
-            if not file_exists:
-                writer.writerow(['Timestamp', 'Rating', 'Comment'])
-            
-            writer.writerow([timestamp, rating, comment])
-
-        print(f"Feedback saved to CSV: {rating} stars")
+        print(f"Feedback saved to Database: {rating} stars")
         return jsonify({'status': 'success'})
     
     except Exception as e:
+        db.session.rollback()
         print(f"Failed to save feedback: {e}")
         return jsonify({'status': 'error', 'message': str(e)})
     
